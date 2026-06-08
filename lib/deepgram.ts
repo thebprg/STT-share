@@ -104,7 +104,7 @@ function getDeepgramUrl() {
     model: "nova-3",
     interim_results: "true",
     smart_format: "true",
-    endpointing: "500",
+    endpointing: "350",
     utterance_end_ms: "1500"
   });
 

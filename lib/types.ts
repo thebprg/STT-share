@@ -18,6 +18,7 @@ export type TranscriptEvent = {
   transcript: string;
   isFinal: boolean;
   timestamp: number;
+  placementTimestamp?: number;
   source?: "speech" | "text";
 };
 

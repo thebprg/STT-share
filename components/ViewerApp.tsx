@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   enterSessionPresence,
   getAblyClient,
@@ -26,6 +26,8 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
   const [interimTimestamp, setInterimTimestamp] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
   const [textSizeIndex, setTextSizeIndex] = useState(0);
+  const interimAnchorRef = useRef(0);
+  const interimSourceRef = useRef<"speech" | "text">("speech");
   const [presence, setPresence] = useState<SessionPresenceState>({
     hasSpeaker: false,
     listenerCount: 0,
@@ -43,6 +45,7 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
     setMessages([]);
     setInterimText("");
     setInterimTimestamp(0);
+    interimAnchorRef.current = 0;
     setPresence({ hasSpeaker: false, listenerCount: 0, totalCount: 0 });
 
     const client = getAblyClient();
@@ -51,14 +54,27 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
     const unsubscribeTranscript = subscribeToTranscript(
       channelName,
       (event) => {
+        const source = event.source ?? "speech";
+
         if (event.isFinal) {
-          setMessages((current) => appendTranscriptEvent(current, event));
+          const placementEvent =
+            interimAnchorRef.current && interimSourceRef.current === source
+              ? { ...event, placementTimestamp: interimAnchorRef.current }
+              : event;
+
+          setMessages((current) => appendTranscriptEvent(current, placementEvent));
           setInterimText("");
           setInterimTimestamp(0);
+          interimAnchorRef.current = 0;
         } else {
+          if (!interimAnchorRef.current || interimSourceRef.current !== source) {
+            interimAnchorRef.current = event.timestamp;
+            interimSourceRef.current = source;
+          }
+
           setInterimText(event.transcript);
-          setInterimSource(event.source ?? "speech");
-          setInterimTimestamp(event.timestamp);
+          setInterimSource(source);
+          setInterimTimestamp(interimAnchorRef.current);
         }
       },
       () => setStatus("error")

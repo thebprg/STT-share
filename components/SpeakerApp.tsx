@@ -42,6 +42,8 @@ export function SpeakerApp() {
   const [copied, setCopied] = useState(false);
   const streamerRef = useRef<DeepgramStreamer | null>(null);
   const sessionCodeRef = useRef("");
+  const interimAnchorRef = useRef(0);
+  const interimSourceRef = useRef<"speech" | "text">("speech");
 
   const sessionUrl = useMemo(() => (sessionCode ? getSessionUrl(sessionCode) : ""), [sessionCode]);
 
@@ -97,6 +99,7 @@ export function SpeakerApp() {
     setMessages([]);
     setInterimText("");
     setInterimTimestamp(0);
+    interimAnchorRef.current = 0;
     setTypedText("");
 
     if (!DEEPGRAM_API_KEY || DEEPGRAM_API_KEY === "your-deepgram-api-key") {
@@ -146,17 +149,31 @@ export function SpeakerApp() {
     setTypedText("");
     setInterimText("");
     setInterimTimestamp(0);
+    interimAnchorRef.current = 0;
   }
 
   function handleTranscript(code: string, event: TranscriptEvent) {
+    const source = event.source ?? "speech";
+
     if (event.isFinal) {
-      setMessages((current) => appendTranscriptEvent(current, event));
+      const placementEvent =
+        interimAnchorRef.current && interimSourceRef.current === source
+          ? { ...event, placementTimestamp: interimAnchorRef.current }
+          : event;
+
+      setMessages((current) => appendTranscriptEvent(current, placementEvent));
       setInterimText("");
       setInterimTimestamp(0);
+      interimAnchorRef.current = 0;
     } else {
+      if (!interimAnchorRef.current || interimSourceRef.current !== source) {
+        interimAnchorRef.current = event.timestamp;
+        interimSourceRef.current = source;
+      }
+
       setInterimText(event.transcript);
-      setInterimSource(event.source ?? "speech");
-      setInterimTimestamp(event.timestamp);
+      setInterimSource(source);
+      setInterimTimestamp(interimAnchorRef.current);
     }
 
     publishTranscript(getChannelName(code), event).catch(() => {

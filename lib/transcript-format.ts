@@ -34,7 +34,7 @@ function shouldStartNewParagraph(last: TranscriptMessage, event: TranscriptEvent
     return true;
   }
 
-  const pauseMs = event.timestamp - last.receivedAt;
+  const pauseMs = (event.placementTimestamp ?? event.timestamp) - last.receivedAt;
 
   if (pauseMs >= PARAGRAPH_BREAK_AFTER_MS && endsSentence(last.text)) {
     return true;
