@@ -20,8 +20,97 @@ type DeepgramResult = {
   speech_final?: boolean;
 };
 
-const DEEPGRAM_URL =
-  "wss://api.deepgram.com/v1/listen?model=nova-3&interim_results=true&smart_format=true&endpointing=100";
+const JAVA_KEYTERMS = [
+  "MVC",
+  "Java Core",
+  "Java EE",
+  "Spring Framework",
+  "Spring Core",
+  "Spring Boot",
+  "Spring MVC",
+  "Spring Data JPA",
+  "Spring Batch",
+  "Spring Cloud",
+  "Spring Security",
+  "Hibernate",
+  "Hibernate ORM",
+  "JPA",
+  "JDBC",
+  "ORM",
+  "DAO",
+  "IoC",
+  "Inversion of Control",
+  "Dependency Injection",
+  "DI",
+  "AOP",
+  "Aspect Oriented Programming",
+  "Microservices",
+  "Multithreading",
+  "Streams API",
+  "REST API",
+  "RESTful API",
+  "SOAP Web Services",
+  "GraphQL",
+  "JAX-RS",
+  "Swagger",
+  "OpenAPI",
+  "WSDL",
+  "PL/SQL",
+  "AWS",
+  "EC2",
+  "S3",
+  "RDS",
+  "Lambda",
+  "Kinesis",
+  "CloudWatch",
+  "CloudFormation",
+  "CodePipeline",
+  "CodeBuild",
+  "CodeDeploy",
+  "Azure App Service",
+  "Azure Functions",
+  "Azure Data Factory",
+  "ADF",
+  "Azure Logic Apps",
+  "Azure Active Directory",
+  "Docker",
+  "Kubernetes",
+  "Apache Tomcat",
+  "JBoss",
+  "WebLogic",
+  "WebSphere",
+  "Maven",
+  "Gradle",
+  "Jenkins",
+  "JIRA",
+  "JUnit",
+  "Mockito",
+  "Selenium",
+  "Postman",
+  "Apache Kafka",
+  "Kafka",
+  "RabbitMQ",
+  "JWT",
+  "OAuth2",
+  "ELK Stack",
+  "Log4J",
+  "XML",
+  "XSLT",
+  "XSD"
+];
+
+function getDeepgramUrl() {
+  const params = new URLSearchParams({
+    model: "nova-3",
+    interim_results: "true",
+    smart_format: "true",
+    endpointing: "100"
+  });
+
+  JAVA_KEYTERMS.forEach((keyterm) => params.append("keyterm", keyterm));
+
+  return `wss://api.deepgram.com/v1/listen?${params.toString()}`;
+}
 
 function getSupportedMimeType() {
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
@@ -55,7 +144,7 @@ export class DeepgramStreamer {
         }
       });
 
-      this.socket = new WebSocket(DEEPGRAM_URL, ["token", this.options.apiKey]);
+      this.socket = new WebSocket(getDeepgramUrl(), ["token", this.options.apiKey]);
       this.socket.binaryType = "arraybuffer";
 
       this.socket.onopen = () => {
