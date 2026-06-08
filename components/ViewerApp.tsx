@@ -129,15 +129,24 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
             A+
           </button>
         </div>
-        <label className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-0.5 text-xs text-neutral-700 ring-1 ring-neutral-200">
-          <input
-            type="checkbox"
-            checked={autoScroll}
-            onChange={(event) => setAutoScroll(event.target.checked)}
-            className="h-3.5 w-3.5 accent-neutral-950"
-          />
+        <button
+          onClick={() => setAutoScroll((current) => !current)}
+          className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-0.5 text-xs text-neutral-700 ring-1 ring-neutral-200"
+          aria-pressed={autoScroll}
+        >
+          <span
+            className={`grid h-3.5 w-3.5 place-items-center rounded-full ring-1 ${
+              autoScroll ? "bg-neutral-950 ring-neutral-950" : "bg-white ring-neutral-300"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                autoScroll ? "bg-white" : "bg-transparent"
+              }`}
+            />
+          </span>
           Auto-scroll
-        </label>
+        </button>
       </div>
       <TranscriptPane
         messages={messages}

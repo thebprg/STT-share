@@ -25,7 +25,7 @@ const TEXT_SIZES = ["xs", "sm", "md", "lg", "xl"] as const;
 export function SpeakerApp() {
   const [sessionCode, setSessionCode] = useState("");
   const [deepgramStatus, setDeepgramStatus] = useState<ConnectionStatus>("idle");
-  const [ablyStatus, setAblyStatus] = useState<ConnectionStatus>("idle");
+  const [, setAblyStatus] = useState<ConnectionStatus>("idle");
   const [presence, setPresence] = useState<SessionPresenceState>({
     hasSpeaker: false,
     listenerCount: 0,
@@ -42,7 +42,6 @@ export function SpeakerApp() {
   const sessionCodeRef = useRef("");
 
   const sessionUrl = useMemo(() => (sessionCode ? getSessionUrl(sessionCode) : ""), [sessionCode]);
-  const sessionConnected = presence.hasSpeaker && presence.listenerCount > 0;
 
   useEffect(() => {
     const client = getAblyClient();
@@ -202,74 +201,37 @@ export function SpeakerApp() {
 
   const isLive = deepgramStatus === "connected" || deepgramStatus === "connecting";
   const canSendText = Boolean(sessionCode && isLive);
-  const statusClass = (status: ConnectionStatus) =>
-    status === "connected"
-      ? "bg-emerald-500"
-      : status === "connecting" || status === "reconnecting"
-        ? "bg-amber-500"
-        : status === "error"
-          ? "bg-red-500"
-          : "bg-neutral-400";
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f7f5ef]">
-      <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-3 px-4 py-3">
-        <header className="sticky top-0 z-20 rounded-lg bg-white/95 px-4 py-3 shadow-sm ring-1 ring-neutral-200 backdrop-blur">
+    <main className="h-screen overflow-hidden bg-[#f4f3ef]">
+      <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-2 px-4 py-2">
+        <header className="sticky top-0 z-20 rounded-lg bg-white/95 px-3 py-2 shadow-sm ring-1 ring-neutral-200 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-lg font-semibold text-neutral-950">Live Caption Console</h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-700">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-50 px-2.5 py-1 ring-1 ring-neutral-200">
-                <span className={`h-2 w-2 rounded-full ${isLive ? "bg-emerald-500" : "bg-neutral-400"}`} />
-                Mic {isLive ? "on" : "off"}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-50 px-2.5 py-1 ring-1 ring-neutral-200">
-                <span className={`h-2 w-2 rounded-full ${statusClass(deepgramStatus)}`} />
-                Deepgram {deepgramStatus}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-50 px-2.5 py-1 ring-1 ring-neutral-200">
-                <span className={`h-2 w-2 rounded-full ${statusClass(ablyStatus)}`} />
-                Ably {ablyStatus}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <section className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-neutral-200">
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-            {sessionCode ? (
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="rounded-md bg-neutral-50 px-2.5 py-1 font-mono text-sm font-semibold tracking-[0.14em] text-neutral-950 ring-1 ring-neutral-200">
-                  {sessionCode}
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-50 px-2.5 py-1 text-xs text-neutral-700 ring-1 ring-neutral-200">
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      sessionConnected ? "bg-emerald-500" : "bg-neutral-400"
-                    }`}
-                  />
-                  {sessionConnected ? "Connected" : "Waiting"}
-                </span>
-                <span className="text-xs text-neutral-500">
-                  {presence.totalCount} users · {presence.listenerCount} listeners
-                </span>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-semibold text-neutral-950">CaptionCast</h1>
+                <p className="text-[11px] text-neutral-500">Speaker console</p>
               </div>
-            ) : (
-              <div className="text-sm text-neutral-500">No active session</div>
-            )}
-
-            <div className="flex justify-start gap-2 lg:justify-end">
+              <button
+                onClick={isLive ? stopSession : startSession}
+                className={`rounded-md px-5 py-2 text-sm font-semibold ${
+                  isLive ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
+                }`}
+              >
+                {isLive ? "Stop" : "Start"}
+              </button>
               <button
                 onClick={() => sessionUrl && copy(sessionUrl)}
-                disabled={!sessionUrl}
-                className={`relative rounded-md border px-3 py-1.5 text-sm font-medium transition ${
+                disabled={!sessionUrl || !isLive}
+                className={`relative rounded-md border px-3 py-2 text-sm font-medium transition ${
                   copied
                     ? "border-emerald-600 bg-emerald-50 text-emerald-800"
                     : "border-neutral-300 bg-white text-neutral-900 disabled:cursor-not-allowed disabled:text-neutral-300"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
-                  <span>{copied ? "✓" : "↗"}</span>
-                  {copied ? "Copied" : "Share link"}
+                  <span>{copied ? "✓" : "↑"}</span>
+                  {copied ? "Copied" : "Share"}
                 </span>
                 {copied ? (
                   <span className="absolute right-0 top-[calc(100%+6px)] rounded-md bg-neutral-950 px-2.5 py-1 text-xs font-medium text-white shadow-sm">
@@ -277,18 +239,29 @@ export function SpeakerApp() {
                   </span>
                 ) : null}
               </button>
-              <button
-                onClick={isLive ? stopSession : startSession}
-                className={`rounded-md px-4 py-1.5 text-sm font-semibold ${
-                  isLive ? "bg-red-600 text-white" : "bg-neutral-950 text-white"
-                }`}
-              >
-                {isLive ? "Stop" : "Start Session"}
-              </button>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              {sessionCode ? (
+                <span className="rounded-md bg-neutral-50 px-2.5 py-1 font-mono text-xs font-semibold tracking-[0.16em] text-neutral-950 ring-1 ring-neutral-200">
+                  {sessionCode}
+                </span>
+              ) : null}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-50 px-2.5 py-1 text-xs text-neutral-700 ring-1 ring-neutral-200">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isLive ? "bg-emerald-500" : "bg-neutral-400"
+                  }`}
+                />
+                Mic
+              </span>
+              <span className="text-xs text-neutral-500">
+                {presence.listenerCount} listener{presence.listenerCount === 1 ? "" : "s"}
+              </span>
             </div>
           </div>
           {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-        </section>
+        </header>
 
         <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200">
           <div className="absolute right-3 top-3 z-10 inline-flex overflow-hidden rounded-md bg-white/90 text-xs text-neutral-700 shadow-sm ring-1 ring-neutral-200 backdrop-blur">
