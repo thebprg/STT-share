@@ -11,6 +11,7 @@ import {
 } from "@/lib/ably";
 import { DeepgramStreamer } from "@/lib/deepgram";
 import { generateSessionCode, getChannelName, getSessionUrl } from "@/lib/session";
+import { appendTranscriptEvent } from "@/lib/transcript-format";
 import type {
   ConnectionStatus,
   SessionPresenceState,
@@ -35,6 +36,7 @@ export function SpeakerApp() {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [interimText, setInterimText] = useState("");
   const [interimSource, setInterimSource] = useState<"speech" | "text">("speech");
+  const [interimTimestamp, setInterimTimestamp] = useState(0);
   const [typedText, setTypedText] = useState("");
   const [textSizeIndex, setTextSizeIndex] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -94,6 +96,7 @@ export function SpeakerApp() {
     setError("");
     setMessages([]);
     setInterimText("");
+    setInterimTimestamp(0);
     setTypedText("");
 
     if (!DEEPGRAM_API_KEY || DEEPGRAM_API_KEY === "your-deepgram-api-key") {
@@ -142,24 +145,18 @@ export function SpeakerApp() {
     setDeepgramStatus("idle");
     setTypedText("");
     setInterimText("");
+    setInterimTimestamp(0);
   }
 
   function handleTranscript(code: string, event: TranscriptEvent) {
     if (event.isFinal) {
-      setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          text: event.transcript,
-          isFinal: true,
-          receivedAt: event.timestamp,
-          source: event.source ?? "speech"
-        }
-      ]);
+      setMessages((current) => appendTranscriptEvent(current, event));
       setInterimText("");
+      setInterimTimestamp(0);
     } else {
       setInterimText(event.transcript);
       setInterimSource(event.source ?? "speech");
+      setInterimTimestamp(event.timestamp);
     }
 
     publishTranscript(getChannelName(code), event).catch(() => {
@@ -288,6 +285,7 @@ export function SpeakerApp() {
             messages={messages}
             interimText={interimText}
             interimSource={interimSource}
+            interimTimestamp={interimTimestamp}
             autoScroll={true}
             textSize={TEXT_SIZES[textSizeIndex]}
             gap="tight"

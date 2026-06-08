@@ -10,6 +10,7 @@ import {
   subscribeToTranscript
 } from "@/lib/ably";
 import { getChannelName, normalizeSessionCode } from "@/lib/session";
+import { appendTranscriptEvent } from "@/lib/transcript-format";
 import type { ConnectionStatus, SessionPresenceState, TranscriptMessage } from "@/lib/types";
 import { TranscriptPane } from "@/components/TranscriptPane";
 import { ViewerJoinForm } from "@/components/ViewerJoinForm";
@@ -22,6 +23,7 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [interimText, setInterimText] = useState("");
   const [interimSource, setInterimSource] = useState<"speech" | "text">("speech");
+  const [interimTimestamp, setInterimTimestamp] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
   const [textSizeIndex, setTextSizeIndex] = useState(0);
   const [presence, setPresence] = useState<SessionPresenceState>({
@@ -40,6 +42,7 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
 
     setMessages([]);
     setInterimText("");
+    setInterimTimestamp(0);
     setPresence({ hasSpeaker: false, listenerCount: 0, totalCount: 0 });
 
     const client = getAblyClient();
@@ -49,20 +52,13 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
       channelName,
       (event) => {
         if (event.isFinal) {
-          setMessages((current) => [
-            ...current,
-            {
-              id: crypto.randomUUID(),
-              text: event.transcript,
-              isFinal: true,
-              receivedAt: event.timestamp,
-              source: event.source ?? "speech"
-            }
-          ]);
+          setMessages((current) => appendTranscriptEvent(current, event));
           setInterimText("");
+          setInterimTimestamp(0);
         } else {
           setInterimText(event.transcript);
           setInterimSource(event.source ?? "speech");
+          setInterimTimestamp(event.timestamp);
         }
       },
       () => setStatus("error")
@@ -152,6 +148,7 @@ export function ViewerApp({ sessionCode }: { sessionCode?: string }) {
         messages={messages}
         interimText={interimText}
         interimSource={interimSource}
+        interimTimestamp={interimTimestamp}
         autoScroll={autoScroll}
         textSize={TEXT_SIZES[textSizeIndex]}
         gap="tight"

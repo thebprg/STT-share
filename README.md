@@ -54,7 +54,8 @@ Because microphone audio streams directly from the browser to Deepgram, this MVP
 model=nova-3
 interim_results=true
 smart_format=true
-endpointing=100
+endpointing=500
+utterance_end_ms=1500
 ```
 
 ## Viewer Flow
