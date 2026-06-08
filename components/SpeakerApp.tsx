@@ -141,6 +141,8 @@ export function SpeakerApp() {
       leaveSessionPresence(getChannelName(sessionCode), "speaker").catch(() => undefined);
     }
     setDeepgramStatus("idle");
+    setTypedText("");
+    setInterimText("");
   }
 
   function handleTranscript(code: string, event: TranscriptEvent) {
@@ -170,7 +172,7 @@ export function SpeakerApp() {
   function streamTypedText(value: string) {
     setTypedText(value);
 
-    if (!sessionCode) {
+    if (!sessionCode || !isLive) {
       return;
     }
 
@@ -185,7 +187,7 @@ export function SpeakerApp() {
   function submitTypedText() {
     const transcript = typedText.trim();
 
-    if (!sessionCode || !transcript) {
+    if (!sessionCode || !isLive || !transcript) {
       return;
     }
 
@@ -199,6 +201,7 @@ export function SpeakerApp() {
   }
 
   const isLive = deepgramStatus === "connected" || deepgramStatus === "connecting";
+  const canSendText = Boolean(sessionCode && isLive);
   const statusClass = (status: ConnectionStatus) =>
     status === "connected"
       ? "bg-emerald-500"
@@ -327,8 +330,8 @@ export function SpeakerApp() {
             <input
               value={typedText}
               onChange={(event) => streamTypedText(event.target.value)}
-              disabled={!sessionCode}
-              placeholder={sessionCode ? "Type live text..." : "Start a session to type live text"}
+              disabled={!canSendText}
+              placeholder={canSendText ? "Type live text..." : "Start the session to type live text"}
               aria-label="Type live text"
               className="w-full rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-base text-neutral-950 outline-none placeholder:text-neutral-400 focus:border-neutral-400 disabled:bg-white disabled:text-neutral-400"
             />

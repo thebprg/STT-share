@@ -43,10 +43,10 @@ export function TranscriptPane({
   return (
     <div className={`overflow-y-auto ${className}`}>
       <div
-        className={`mx-auto flex min-h-full w-full max-w-4xl flex-col px-5 py-3 ${
-          isEmpty ? "justify-center" : "justify-end"
+        className={`mx-auto flex min-h-full w-full max-w-none flex-col px-5 py-10 ${
+          isEmpty ? "justify-center" : "justify-start"
         } ${
-          gap === "tight" ? "gap-1" : gap === "compact" ? "gap-2" : "gap-4"
+          gap === "tight" ? "gap-0.5" : gap === "compact" ? "gap-1.5" : "gap-3"
         }`}
       >
         {isEmpty ? (
@@ -57,8 +57,8 @@ export function TranscriptPane({
             key={message.id}
             className={`${textClass} leading-relaxed ${
               message.source === "text"
-                ? "text-neutral-900 underline decoration-emerald-500 decoration-2 underline-offset-8"
-                : "text-neutral-950"
+                ? "font-mono text-neutral-500"
+                : "font-semibold text-neutral-950"
             }`}
           >
             {message.text}
@@ -68,7 +68,7 @@ export function TranscriptPane({
           <p
             className={`${textClass} leading-relaxed ${
               interimSource === "text"
-                ? "text-neutral-600 underline decoration-emerald-400 decoration-2 underline-offset-8"
+                ? "font-mono text-neutral-400"
                 : "text-neutral-500"
             }`}
           >
